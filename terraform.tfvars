@@ -1,4 +1,4 @@
-nsg-rules = [{
+nsg_rules = [{
   name                       = "AllowRDP"
   priority                   = 100
   direction                  = "Inbound"

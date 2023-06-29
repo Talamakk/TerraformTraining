@@ -41,7 +41,7 @@ variable "env" {
   }
 }
 
-variable "nsg-rules" {
+variable "nsg_rules" {
   type = list(object({
     name                       = string
     priority                   = number
