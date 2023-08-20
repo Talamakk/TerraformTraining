@@ -1,7 +1,3 @@
-locals {
-  vm_script = "New-Item -Path 'C:/' -Name 'NewFolder' -ItemType Directory; cd C:/NewFolder; Get-Process | Out-File -FilePath ./Process.txt"
-}
-
 resource "azurerm_network_interface" "nic" {
   count = var.instances
 
@@ -13,18 +9,18 @@ resource "azurerm_network_interface" "nic" {
     name                          = "internal"
     subnet_id                     = var.subnet_id
     private_ip_address_allocation = "Dynamic"
-    # public_ip_address_id          = azurerm_public_ip.public_ip[count.index].id
+    public_ip_address_id          = azurerm_public_ip.public_ip[count.index].id
   }
 }
 
-# resource "azurerm_public_ip" "public_ip" {
-#   count = var.instances
+resource "azurerm_public_ip" "public_ip" {
+  count = var.instances
 
-#   name                = "vm_public_ip"
-#   resource_group_name = var.rg_name
-#   location            = var.region
-#   allocation_method   = "Dynamic"
-# }
+  name                = join("-", ["pip", var.region, var.env, "${format("%03s", count.index + 1)}"])
+  resource_group_name = var.rg_name
+  location            = var.region
+  allocation_method   = "Dynamic"
+}
 
 resource "azurerm_windows_virtual_machine" "vm" {
   count = var.instances
@@ -34,7 +30,7 @@ resource "azurerm_windows_virtual_machine" "vm" {
   location            = var.region
   size                = "Standard_B2s"
   admin_username      = "adminuser"
-  admin_password      = "P@$$w0rd1234!"
+  admin_password      = var.vm_password
   computer_name       = "WinServerVm"
   network_interface_ids = [
     azurerm_network_interface.nic[count.index].id,
@@ -56,21 +52,18 @@ resource "azurerm_windows_virtual_machine" "vm" {
 resource "azurerm_virtual_machine_extension" "script" {
   count = var.instances
 
-  name                 = "new_file"
+  name                 = "new_file_script"
   virtual_machine_id   = azurerm_windows_virtual_machine.vm[count.index].id
   publisher            = "Microsoft.Compute"
   type                 = "CustomScriptExtension"
   type_handler_version = "1.10"
 
-  protected_settings = <<SETTINGS
-
-{
-
-"commandToExecute": "powershell.exe -Command \"${local.vm_script}\""
-
-}
-
-SETTINGS
+settings             = <<SETTINGS
+      {
+          "fileUris": ["${var.blob_uri}"],
+          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -file script1.ps1"
+      }
+  SETTINGS
 
 }
 

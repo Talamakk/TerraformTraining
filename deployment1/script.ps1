@@ -1,0 +1,1 @@
+New-Item -Path 'C:/' -Name 'NewFolder' -ItemType Directory; cd C:/NewFolder; Get-Process | Out-File -FilePath ./Process.txt

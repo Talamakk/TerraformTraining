@@ -1,7 +1,8 @@
 resource "azurerm_network_security_group" "nsg" {
-  name                = join("-", ["nsg", var.region, var.env])
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  provider            = azurerm.corp
+  name                = join("-", ["nsg", local.region, local.env])
+  location            = local.region
+  resource_group_name = local.rg_name
 
   dynamic "security_rule" {
     for_each = var.nsg_rules
